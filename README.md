@@ -25,7 +25,7 @@ ollama pull phi4-mini gemma4:e2b qwen2.5-coder:7b
 外部のHTMLファイルからOllamaのAPIにアクセスできるよう、CORS設定（`OLLAMA_ORIGINS`）を許可して起動してください。
 
 ### 💻 バッチファイルによるOllamaとNESCOW連続起動（Windows）
-Windows環境では、`start_nescow.bat` によりOllamaとNESCOWの双方を起動させることが可能です。そのバッチファイルを実行する前にOllamaが動作している場合には、それを終了させて置く必要があります。
+Windows環境では、`start_nescow.bat` によりOllamaとNESCOWの双方を起動させることが可能です。そのバッチファイルを実行する前にOllamaが動作している場合には、それを終了させておく必要があります。
 
 ### Ollama起動コマンド例
 *Ollamaが動作している場合には、それをコマンド実行前に終了させておく必要があります
@@ -82,12 +82,12 @@ Since all processing is handled locally, your draft data is never sent to extern
 - **Single-File Setup**: No complex installation or server configuration is required. Open the single HTML file in any web browser.
 
 ## Prerequisites
-Ollama needs to be installed in advance. Please see https://ollama.com/download for installation.
+**Ollama** needs to be installed in advance. Please see https://ollama.com/download for installation.
 NESCOW default LLMs can be installed as follows.
 ```powershell or bash
 ollama pull phi4-mini gemma4:e2b qwen2.5-coder:7b
 ```
-To use NESCOW, **Ollama** must be running on your local machine. You also need to enable CORS by setting the `OLLAMA_ORIGINS` environment variable so that the browser application can access the Ollama API.
+To use NESCOW, Ollama must be running on your local machine. You also need to enable CORS by setting the `OLLAMA_ORIGINS` environment variable so that the browser application can access the Ollama API.
 
 ### Launching Ollama and NESCOW using a single batch (.bat) file (Windows only)
 

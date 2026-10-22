@@ -17,7 +17,7 @@ LLMによる英訳・校正を援用した執筆作業をローカル・オフ�
 ## 事前準備
 
 NESCOWを使用するには、ローカル環境で **Ollama** が動作している必要があります。インストール方法については https://ollama.com/download をご覧ください。
-OllamaにローカルLLMをインストールします。NESCOWのデフォルトのものは以下のコマンドでインストールできます。
+その上で、OllamaにローカルLLMをインストールします。NESCOWのデフォルトのものは以下のコマンドでインストールできます。
 ```powershell or bash
 ollama pull phi4-mini gemma4:e2b qwen2.5-coder:7b
 ```

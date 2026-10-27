@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>NESCOW: Non-native English Speaker's Co-Writer</title>
+    <link rel="icon" type="image/png" href="nescow.png">
+    <style>
+        body { font-family: -apple-system, sans-serif; margin: 20px; background: #f5f7fa; color: #333; }
+        
+        /* タイトルとロゴを並べるためのスタイル */
+        .title-container { display: flex; align-items: center; gap: 12px; margin-bottom: 5px; }
+        .title-logo { width: 42px; height: 42px; object-fit: contain; }
+        h2 { margin: 0; color: #2c3e50; }
+
+        .container { display: flex; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        .panel { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; resize: vertical; }
+        button { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 15px; margin-top: 10px; }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #bdc3c7; }
+        .model-select { margin-bottom: 15px; padding: 5px; font-size: 14px; }
+        .output-textarea { background: #fffdf0; border: 1px solid #f1c40f; margin-top: 10px; font-weight: 500; }
+        .append-btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-space { background: #2ecc71; } .btn-space:hover { background: #27ae60; }
+        .btn-newline { background: #9b59b6; } .btn-newline:hover { background: #8e44ad; }
+        .btn-copy { background: #1abc9c; } .btn-copy:hover { background: #16a085; }
+        .action-btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .shortcut-guide-container { background: #fcfcfc; border: 1px dashed #ddd; border-radius: 4px; padding: 12px; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: #555; }
+        .shortcut-section { margin-bottom: 8px; }
+        .shortcut-section:last-child { margin-bottom: 0; }
+        .shortcut-section b { color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+    <div class="title-container">
+        <img src="nescow.png" alt="NESCOW Logo" class="title-logo">
+        <h2>NESCOW: Non-native English Speaker's Co-Writer</h2>
+    </div>
+    <p style="color: #666; font-size: 14px;">English translation and polishing on the fly</p>
+
+    <!-- ヘルプ・ショートカットガイドを最上部に集約 -->
+    <div class="shortcut-guide-container">
+        <div class="shortcut-section">
+            💡 <b>基本操作:</b> ・校正の実行: <code>Ctrl + Enter</code>
+        </div>
+        <div class="shortcut-section">
+            📝 <b>校正【前】のテキストを右へ追加:</b> 
+            ・<code>Ctrl + Shift + Space</code> ：半角スペースで結合
+            ・<code>Ctrl + Shift + Enter</code> ：改行して結合
+        </div>
+        <div class="shortcut-section">
+            🌟 <b>校正【後】の英文を右へ追加:</b> 
+            ・<code>Ctrl + Space</code> ：半角スペースで結合
+            ・<code>Ctrl + ↓ (下矢印キー)</code> ：改行して結合
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 左パネル：入力と校正（ポリッシュ前後を密接に配置） -->
+        <div class="panel">
+            <h3>⚙️ 1文・複数文のポリッシュ</h3>
+            <label for="modelSelect">使用するOllamaモデル: </label>
+            <select id="modelSelect" class="model-select">
+                <option value="phi4-mini">phi4-mini</option>
+                <option value="gemma4:e2b">gemma4:e2b</option>
+                <option value="qwen2.5-coder:7b">qwen2.5-coder:7b</option>
+            </select>
+
+            <textarea id="inputText" rows="5" placeholder="ここに元の文章（日本語・英語・中国語など）を入力..."></textarea>
+            <button id="polishBtn" onclick="polishSentence()">✨ 論文調に変換 (Ctrl + Enter)</button>
+            
+            <!-- 出力エリアを入力欄のすぐ下に配置して近接化 -->
+            <div id="outputContainer" style="display:none; margin-top: 20px;">
+                <h4 style="margin: 0 0 5px 0; color: #2c3e50;">🔍 ポリッシュ結果（その場で直接編集できます）</h4>
+                <textarea id="outputText" class="output-textarea" rows="5" placeholder="AIの生成結果..."></textarea>
+                
+                <div class="append-btn-group">
+                    <button class="btn-space" onclick="appendTarget('space')">👍 [半角スペース] で本文末尾に追加</button>
+                    <button class="btn-newline" onclick="appendTarget('newline')">⏎ [改行] して本文末尾に追加</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右パネル：論文原稿エディタ -->
+        <div class="panel">
+            <h3>📝 執筆中の論文原稿</h3>
+            <textarea id="mainText" rows="25" placeholder="ここに原稿が組み立てられます。直接タイピングして編集も可能です。"></textarea>
+            
+            <div class="action-btn-group">
+                <button id="copyBtn" class="btn-copy" onclick="copyToClipboard()" style="flex: 2;">📋 原稿をクリップボードにコピー</button>
+                <button style="background:#e74c3c; flex: 1;" onclick="if(confirm('原稿をクリアしますか？')) document.getElementById('mainText').value=''">クリア</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // キーボードショートカットの集中制御関数
+        function handleShortcuts(e) {
+            // 1. 校正【前】の追加（Ctrl + Shift が押されているとき）
+            if (e.ctrlKey && e.shiftKey) {
+                if (e.code === 'Space') { // Ctrl + Shift + Space
+                    e.preventDefault();
+                    appendOriginalText('space');
+                    return;
+                }
+                if (e.key === 'Enter') { // Ctrl + Shift + Enter
+                    e.preventDefault();
+                    appendOriginalText('newline');
+                    return;
+                }
+            }
+
+            // 2. 校正【後】の追加（Ctrl単体と特定のキーの組み合わせ：衝突回避版）
+            if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+                if (e.code === 'Space') { // Ctrl + Space (半角スペースで追加)
+                    e.preventDefault();
+                    appendTarget('space');
+                    return;
+                }
+                if (e.key === 'ArrowDown') { // Ctrl + ↓ (下矢印キーで改行追加)
+                    e.preventDefault();
+                    appendTarget('newline');
+                    return;
+                }
+                if (e.key === 'Enter') { // Ctrl + Enter (校正の実行)
+                    // 入力欄にフォーカスがあるときのみ実行（誤連打防止）
+                    if (document.activeElement.id === 'inputText') {
+                        e.preventDefault();
+                        polishSentence();
+                    }
+                    return;
+                }
+            }
+        }
+
+        // 入力欄と出力欄の両方でショートカットを有効化
+        document.getElementById('inputText').addEventListener('keydown', handleShortcuts);
+        document.getElementById('outputText').addEventListener('keydown', handleShortcuts);
+
+        // Ollama APIを叩いて校正を実行する関数
+        async function polishSentence() {
+            const input = document.getElementById('inputText').value.trim();
+            const model = document.getElementById('modelSelect').value;
+            const btn = document.getElementById('polishBtn');
+            const outputContainer = document.getElementById('outputContainer');
+            const outputText = document.getElementById('outputText');
+
+            if (!input) return alert('文章を入力してください。');
+
+            btn.disabled = true;
+            btn.innerText = 'ローカルLLMが処理中...';
+            outputContainer.style.display = 'block';
+            outputText.value = '思考中...';
+
+            const systemPrompt = "You are an elite academic co-writer. Transform the input sentences into sophisticated, publication-ready academic English. Maintain the original sentence-by-sentence structure and logical meaning. Output ONLY the polished English sentence(s). Never include introductions, explanations, or quotes.";
+
+            try {
+                const response = await fetch('http://localhost:11434/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model,
+                        prompt: `${systemPrompt}\n\nInput Text:\n${input}`,
+                        stream: false
+                    })
+                });
+
+                if (!response.ok) throw new Error('Ollamaとの通信に失敗しました。CORS設定を確認してください。');
+                
+                const data = await response.json();
+                outputText.value = data.response.trim();
+                
+                // 生成完了後、即座に編集できるよう校正後エリアにフォーカスを自動移動
+                outputText.focus();
+                
+            } catch (error) {
+                outputText.value = 'エラーが発生しました: ' + error.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '✨ 論文調に変換 (Ctrl + Enter)';
+            }
+        }
+
+        // 校正【後】の英文をアペンドする関数
+        function appendTarget(type) {
+            const output = document.getElementById('outputText').value.trim();
+            const mainTextEl = document.getElementById('mainText');
+            
+            if (!output || output === '思考中...' || output.startsWith('エラー')) return;
+
+            let currentText = mainTextEl.value;
+            
+            if (type === 'space') {
+                const connector = currentText.length > 0 ? ' ' : '';
+                mainTextEl.value = currentText + connector + output;
+            } else if (type === 'newline') {
+                const connector = currentText.length > 0 ? '\n' : '';
+                mainTextEl.value = currentText + connector + output;
+            }
+            
+            resetInput();
+        }
+
+// 校正【前】のテキストをアペンドする関数
+        function appendOriginalText(type) {
+            const input = document.getElementById('inputText').value.trim();
+            const mainTextEl = document.getElementById('mainText');
+            
+            if (!input) return;
+
+            let currentText = mainTextEl.value;
+            
+            if (type === 'space') {
+                const connector = currentText.length > 0 ? ' ' : '';
+                mainTextEl.value = currentText + connector + input;
+            } else if (type === 'newline') {
+                const connector = currentText.length > 0 ? '\n' : '';
+                mainTextEl.value = currentText + connector + input;
+            }
+
+            resetInput();
+        }
+
+        // 原稿をクリップボードにコピーする関数
+        function copyToClipboard() {
+            const mainTextEl = document.getElementById('mainText');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            if (!mainTextEl.value) {
+                alert('コピーする原稿がありません。');
+                return;
+            }
+
+            navigator.clipboard.writeText(mainTextEl.value).then(() => {
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = '📋 コピーしました！ ✔';
+                copyBtn.style.background = '#2ce3b9';
+                
+                setTimeout(() => {
+                    copyBtn.innerText = originalText;
+                    copyBtn.style.background = '#1abc9c';
+                }, 2000);
+            }).catch(err => {
+                alert('コピーに失敗しました: ' + err);
+            });
+        }
+
+        // 入力をクリアしてフォーカスを最初に戻す共通処理
+        function resetInput() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputContainer').style.display = 'none';
+            document.getElementById('outputText').value = '';
+            document.getElementById('inputText').focus();
+        }
+    </script>
+</body>
+</html>
